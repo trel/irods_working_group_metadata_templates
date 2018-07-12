@@ -12,11 +12,63 @@ host: "virtserver.swaggerhub.com"
 basePath: "/metadata/template/1.0.0"
 tags:
   - name: "Templates"
-    description: "Secured Admin-only calls"
-  - name: "Metadata"
-    description: "Operations available to regular users and curators"
+    description: "Template Operations"
+  - name: "Element"
+    description: "Element Operations"
+schemes:
+- "https"
+- "http"
 paths:
-  /template/findByGuid:
+  /Template:
+    post:
+      tags:
+      - "Templates"
+      summary: "Add a new Template"
+      description: ""
+      operationId: "addTemplate"
+      consumes:
+      - "application/json"
+      - "application/xml"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Template object that needs to be added to the system"
+        required: true
+        schema:
+          $ref: '#/definitions/Template'
+      responses:
+        405:
+          description: "Invalid input"
+    put:
+      tags:
+      - "Templates"
+      summary: "Update an existing Template"
+      description: ""
+      operationId: "updateTemplate"
+      consumes:
+      - "application/json"
+      - "application/xml"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Template object that needs to be added to the system"
+        required: true
+        schema:
+          $ref: '#/definitions/Template'
+      responses:
+        400:
+          description: "Invalid ID supplied"
+        404:
+          description: "Template not found"
+        405:
+          description: "Validation exception"
+  /template/{guid}:
     get:
       tags:
         - "Templates"
@@ -28,10 +80,10 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - in: "query"
+        - in: "path"
           name: "guid"
           description: "pass an a guid to get template"
-          required: false
+          required: true
           type: "string"
       responses:
         '200':
@@ -41,6 +93,126 @@ paths:
               $ref: '#/definitions/Template'
         '400':
           description: "bad input parameter"
+    delete:
+      tags:
+      - "Templates"
+      summary: "Delete a Template"
+      description: ""
+      operationId: "deleteTemplate"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "guid"
+        in: "path"
+        description: "template guid to delete"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        400:
+          description: "Invalid ID supplied"
+        404:
+          description: "Template not found"
+
+
+  /template/{guid}/element:
+    post:
+      tags:
+      - "Element"
+      summary: "Create Element"
+      description: "Add element for template."
+      operationId: "addElement"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "guid"
+        description: unique object task name
+        required: true
+        type: "integer"
+      - in: "body"
+        name: "body"
+        description: "Created Element object"
+        required: true
+        schema:
+          $ref: "#/definitions/Element"
+      responses:
+        default:
+          description: "successful operation"
+
+
+  /template/{guid}/element/{guid}:
+    get:
+      tags:
+      - "Element"
+      summary: "Get Element by guid"
+      description: ""
+      operationId: "getElementByGuid"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "guid"
+        in: "path"
+        description: "The Element that needs to be fetched. "
+        required: true
+        type: "integer"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Element"
+        400:
+          description: "Invalid guid supplied"
+        404:
+          description: "Element not found"
+    put:
+      tags:
+      - "Element"
+      summary: "Updated Element"
+      operationId: "updateElement"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "guid"
+        in: "path"
+        description: "Element that need to be updated"
+        required: true
+        type: "integer"
+      - in: "body"
+        name: "body"
+        description: "Updated Element object"
+        required: true
+        schema:
+          $ref: "#/definitions/Element"
+      responses:
+        400:
+          description: "Invalid Element supplied"
+        404:
+          description: "Element not found"
+    delete:
+      tags:
+      - "Element"
+      summary: "Delete Element"
+      operationId: "deleteElement"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "guid"
+        in: "path"
+        description: "The Element that needs to be deleted"
+        required: true
+        type: "integer"
+      responses:
+        400:
+          description: "Invalid guid supplied"
+        404:
+          description: "Element not found"
+
 definitions:
   Template:
     type: "object"
@@ -69,10 +241,12 @@ definitions:
       owner:
         type: "string"
       elements:
-        $ref: '#/definitions/Metadata'
+        type: "array"
+        items:
+            $ref: '#/definitions/Element'
     xml:
       name: "Template"
-  Metadata:
+  Element:
     type: "object"
     properties:
       id:
@@ -98,6 +272,8 @@ definitions:
         type: "string"
         format: "UUID"
       elements:
-        $ref: '#/definitions/Metadata'
+        type: "array"
+        items:
+            $ref: '#/definitions/Element'
     xml:
-      name: "Metadata"
+      name: "Element"
