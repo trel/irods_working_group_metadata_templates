@@ -244,30 +244,40 @@ definitions:
   MDTemplateElement:
     type: object
     properties:
-      id:
-        type: integer
-        format: int64
-      attribute:
-        type: string
-      defaultValue:
-        type: string
-      attributeUnit:
-        type: string
-      type:
-        type: string
-      required:
-        type: boolean
-      options:
-        type: string
-      access_type:
-        type: string
-      validationExp:
-        type: string
       guid:
         type: string
         format: UUID
+        description: 'GUID uniquely identifying the element'
+      name:
+        type: string
+        description: 'Label for the element, analagous to the avu attribute'
+      defaultValue:
+        description: 'Value to use or select given no user input'
+        type: string
+      type:
+        type: string
+        description: 'Type of element [string, int, list, etc]'
+      required:
+        type: boolean
+        description: 'Indicates that a value must be enetered'
+      options:
+        type: string
+        description: 'Type-specific options for a field, e.g. if a list this is a delimited array of possible values. For an ontology it may be a reference to a vocabulary'
+      access_type:
+        type: string
+        description: 'Type of metadata reference, e.g. a literal or an http referenceable link'
+      validationExp:
+        type: string
+        description: 'Type-specific validation hint, primarily via regex'
+      cardinalityMin:
+        type: integer
+        description: 'Minimum cardinality, minumum number of element x to be defined'
+      cardinalityMax:
+        type: integer
+        description: 'Maximum cardinality, maximum number of element x to be defined'
       elements:
         type: array
+        description: 'An array of child elements in the case of a grouping'
         items:
           $ref: '#/definitions/MDTemplateElement'
     xml:
