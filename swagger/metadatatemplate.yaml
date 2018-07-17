@@ -254,6 +254,9 @@ definitions:
       type:
         type: string
         description: 'Type of element [string, int, list, etc]'
+      unit:
+        type: string
+        description: 'Unit of measure associated with entered value, e.g. a length field may have a unit of meters'
       required:
         type: boolean
         description: 'Indicates that a value must be enetered'
