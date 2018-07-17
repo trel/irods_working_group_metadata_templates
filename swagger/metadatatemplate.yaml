@@ -19,12 +19,12 @@ schemes:
   - https
   - http
 paths:
-  '/template':
+  /template:
     post:
       tags:
         - Templates
       summary: Add a new Template
-      description: 'Adding a new metadata template'
+      description: Adding a new metadata template
       operationId: addTemplate
       consumes:
         - application/json
@@ -38,7 +38,7 @@ paths:
           description: Template object that needs to be added to the system
           required: true
           schema:
-            $ref: '#/definitions/Template'
+            $ref: '#/definitions/MDTemplate'
       responses:
         '405':
           description: Invalid input
@@ -60,7 +60,7 @@ paths:
           description: Template object that needs to be added to the system
           required: true
           schema:
-            $ref: '#/definitions/Template'
+            $ref: '#/definitions/MDTemplate'
       responses:
         '400':
           description: Invalid ID supplied
@@ -90,7 +90,7 @@ paths:
           description: search results matching criteria
           schema:
             items:
-              $ref: '#/definitions/Template'
+              $ref: '#/definitions/MDTemplate'
         '400':
           description: bad input parameter
     delete:
@@ -135,7 +135,7 @@ paths:
           description: Created Element object
           required: true
           schema:
-            $ref: '#/definitions/Element'
+            $ref: '#/definitions/MDTemplateElement'
       responses:
         default:
           description: successful operation
@@ -159,7 +159,7 @@ paths:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/Element'
+            $ref: '#/definitions/MDTemplateElement'
         '400':
           description: Invalid guid supplied
         '404':
@@ -183,7 +183,7 @@ paths:
           description: Updated Element object
           required: true
           schema:
-            $ref: '#/definitions/Element'
+            $ref: '#/definitions/MDTemplateElement'
       responses:
         '400':
           description: Invalid Element supplied
@@ -209,7 +209,7 @@ paths:
         '404':
           description: Element not found
 definitions:
-  Template:
+  MDTemplate:
     type: object
     properties:
       id:
@@ -238,10 +238,10 @@ definitions:
       elements:
         type: array
         items:
-          $ref: '#/definitions/Element'
+          $ref: '#/definitions/MDTemplateElement'
     xml:
-      name: Template
-  Element:
+      name: MDTemplate
+  MDTemplateElement:
     type: object
     properties:
       id:
@@ -269,6 +269,6 @@ definitions:
       elements:
         type: array
         items:
-          $ref: '#/definitions/Element'
+          $ref: '#/definitions/MDTemplateElement'
     xml:
-      name: Element
+      name: MDTemplateElement
