@@ -107,8 +107,8 @@ paths:
           in: path
           description: template guid to delete
           required: true
-          type: integer
-          format: int64
+          type: string
+          format: UUID
       responses:
         '400':
           description: Invalid ID supplied
@@ -129,7 +129,7 @@ paths:
           name: guid
           description: unique object task name
           required: true
-          type: integer
+          type: string
         - in: body
           name: body
           description: Created Element object
@@ -154,7 +154,7 @@ paths:
           in: path
           description: 'The Element that needs to be fetched. '
           required: true
-          type: integer
+          type: string
       responses:
         '200':
           description: successful operation
@@ -177,7 +177,7 @@ paths:
           in: path
           description: Element that need to be updated
           required: true
-          type: integer
+          type: string
         - in: body
           name: body
           description: Updated Element object
@@ -202,7 +202,7 @@ paths:
           in: path
           description: The Element that needs to be deleted
           required: true
-          type: integer
+          type: string
       responses:
         '400':
           description: Invalid guid supplied
@@ -244,28 +244,35 @@ definitions:
       guid:
         type: string
         format: UUID
-        description: 'GUID uniquely identifying the element'
+        description: GUID uniquely identifying the element
       name:
         type: string
         description: 'Label for the element, analagous to the avu attribute'
       defaultValue:
-        description: 'Value to use or select given no user input'
+        description: Value to use or select given no user input
         type: string
       type:
         type: string
-        description: 'Type of element [string, int, list, etc]'
+        description: 'Type of element [string, int, list, boolean, float, range etc]'
       unit:
         type: string
-        description: 'Unit of measure associated with entered value, e.g. a length field may have a unit of meters'
+        description: >-
+          Unit of measure associated with entered value, e.g. a length field may
+          have a unit of meters
       required:
         type: boolean
-        description: 'Indicates that a value must be enetered'
+        description: Indicates that a value must be enetered
       options:
         type: string
-        description: 'Type-specific options for a field, e.g. if a list this is a delimited array of possible values. For an ontology it may be a reference to a vocabulary'
+        description: >-
+          Type-specific options for a field, e.g. if a list this is a delimited
+          array of possible values. For an ontology it may be a reference to a
+          vocabulary
       access_type:
         type: string
-        description: 'Type of metadata reference, e.g. a literal or an http referenceable link'
+        description: >-
+          Type of metadata reference, e.g. a literal or an http referenceable
+          link
       validationExp:
         type: string
         description: 'Type-specific validation hint, primarily via regex'
@@ -277,7 +284,7 @@ definitions:
         description: 'Maximum cardinality, maximum number of element x to be defined'
       elements:
         type: array
-        description: 'An array of child elements in the case of a grouping'
+        description: An array of child elements in the case of a grouping
         items:
           $ref: '#/definitions/MDTemplateElement'
     xml:
