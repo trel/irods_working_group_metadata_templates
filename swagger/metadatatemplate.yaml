@@ -82,7 +82,7 @@ paths:
       summary: Get all templates
       operationId: getAllTemplate
       description: |
-        This will retrun all the templates based on permission
+        This will return all the templates based on permission
       produces:
         - application/json
       responses:
