@@ -10,10 +10,10 @@ The repository [irods_avu_json-ruleset](https://github.com/MaastrichtUniversity/
 This docker-compose binds everything together in a docker example.
 
 ## Running
-This will spawn the iCAT container and a postgres DB container.
+This will spawn the iRODS catalog provider container and a postgres DB container.
 ```
 docker-compose build
-docker-composer up
+docker-compose up
 ```
 
 ## Testing
@@ -22,7 +22,7 @@ and warnings, but should report when a unexpected error happens.
 
 You can run it using
 ```
-docker exec -it irods_avu_json-docker_irods_1 bash
+docker exec -it irods_avu_json-docker_irods-provider_1 bash
 su - irods
 cd /irods_avu_json-ruleset/tests
 bash pep_tests.sh
