@@ -25,8 +25,8 @@ mkdir -p /irods_avu_json-ruleset/microservices/build && \
     make && \
     make install
 
-# Check if this is a first run of this container
-if [[ ! -e /var/run/irods_installed ]]; then
+# Check whether this is the first run of the container
+if [[ ! -e /var/lib/irods/VERSION.json ]]; then
 
     if [ -n "$RODS_PASSWORD" ]; then
         echo "Setting irods password"
@@ -41,9 +41,6 @@ if [[ ! -e /var/run/irods_installed ]]; then
 
     # Add python rule engine to iRODS
     /opt/irods/add_rule_engine.py /etc/irods/server_config.json python 1
-
-    touch /var/run/irods_installed
-
 else
     service irods start
 fi
