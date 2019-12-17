@@ -5,7 +5,7 @@
 This is a docker environment to test the [irods_avu_json](https://github.com/MaastrichtUniversity/irods_avu_json) Python 
 module. Please read the README of that repository for an introduction into the goals of this work.
 
-The repository [irods_avu_json-ruleset](https://github.com/MaastrichtUniversity/irods_avu_json) contains the iRODS rules, policies and microservices to make the conversion code operational in iRODS.
+The repository [irods_avu_json-ruleset](https://github.com/MaastrichtUniversity/irods_avu_json-ruleset) contains the iRODS rules, policies and microservices to make the conversion code operational in iRODS.
 
 This docker-compose binds everything together in a docker example.
 
