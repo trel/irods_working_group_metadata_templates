@@ -7,6 +7,10 @@
 #################################
 
 import json
+import jsonschema
+import requests
+
+from genquery import *
 
 def metadata_templates_attach(rule_args, callback, rei):
     # Attach (logical_path, schema, type)
@@ -60,7 +64,7 @@ def metadata_templates_detach(rule_args, callback, rei):
         "entity_type": 'collection',
         "operations": [
             {
-                "operation": 'rm',
+                "operation": 'remove',
                 "attribute": 'irods::metadata_templates',
                 "value": schema,
                 "units": type
@@ -83,6 +87,27 @@ def metadata_templates_gather(rule_args, callback, rei):
     logical_path = rule_args[0]
     recursive = rule_args[1]
 
+    # get all schema locations attached to this collection
+    schemas = []
+    for schema, thetype in Query(callback,
+                        "META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS",
+                        "COLL_NAME = '{}' and META_COLL_ATTR_NAME = 'irods::metadata_templates'".format(logical_path)):
+        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
+        if thetype == 'url':
+            try:
+                r = requests.get(schema)
+                callback.writeLine('serverLog', r.content)
+                j = json.loads(r.content)
+                callback.writeLine('serverLog', j)
+                # build a composition of these schemas and declare AllOf
+                schemas.append(j)
+            except Exception as e:
+#                callback.writeLine('serverLog', '{}: {}'.format(type(e), e))
+                callback.writeLine('serverLog', '{}'.format(type(e)))
+        else:
+            callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
+    combinedschema = {"type": object, "allOf": schemas}
+#    callback.writeLine('serverLog', type(combinedschema))
 
 def metadata_templates_validate(rule_args, callback, rei):
     # Validate (logical_path, recursive)
