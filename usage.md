@@ -63,12 +63,16 @@ units: notaurl
 # gather
 
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', *recursive)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive')" '*logical_path=/tempZone/home/rods/thedir%*recursive=0' ruleExecOut
 ```
 
 with inout to stdout
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather(*logical_path, *recursive, *inout);writeLine('stdout',*inout)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*inout=""' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', '*inout');writeLine('stdout',*inout)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*inout=""' ruleExecOut
 ```
 
-# validate
+# validate data object
+
+```
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas);writeLine('stdout',*schemas);metadata_templates_data_object_validate('*data_object_path', '*schemas', '*errors')" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=""%*data_object_path=/tempZone/home/rods/thedir/a.txt%*errors=""' ruleExecOut
+```

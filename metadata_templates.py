@@ -65,7 +65,7 @@ def metadata_templates_collection_detach(rule_args, callback, rei):
 
 
 def metadata_templates_collection_gather(rule_args, callback, rei):
-    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive)
+    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas)
     # - Find all associated schemas and construct effective schema
     # - Recursive would check/gather all parents up to root
 
@@ -102,29 +102,14 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
 #    rule_args[2] = schemas
 #    return schemas
 
-def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate (logical_path, recursive)
-    # - Run gather (above) to build the effective json schema
-    # - Get and build json payload with all current AVUs
-    # - Run payload and schema through validator
-    # - Return result (OK or failure/explanation)
 
-    logical_path = rule_args[0]
-    recursive = rule_args[1]
-
-
-    # get all metadata on this collection (wait, or are we checking a data object and against the schemas on its parent? hmmm)
-    thedata = {}
-    for a, v, u in Query(callback, # do we need units?  json-schema is just key/value?
-                        "META_COLL_ATTR_NAME, META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS",
-                        "COLL_NAME = '{}' and META_COLL_ATTR_NAME != '{}'".format(logical_path, MT_NAMESPACE)):
-        themetadata[a] = v # will this stomp on identical a/v combinations, that have different units in the catalog?
-
-    # run metadata through each schema, collecting any errors
+def mt_validate(callback, json_to_validate, schemas):
+    # run json_to_validate through each schema, collecting any errors
     errors = []
     for s in schemas:
+        schema_as_json = json.loads(s)
         try:
-            jsonschema.validate(themetadata, s)
+            jsonschema.validate(json_to_validate, schema_as_json)
         except Exception as e:
             errors.append(e)
     # if anything failed, return the errors
@@ -133,3 +118,57 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
         return -2
     # we did it
     return 0
+
+
+def metadata_templates_data_object_validate(rule_args, callback, rei):
+    # Validate data object (logical_path, schemas, errors)
+    # - Get and build json payload with all current AVUs
+    # - Run payload and schemas through validator
+    # - Return result (OK or failure/explanation)
+
+    logical_path = rule_args[0]
+    schemas = rule_args[1]
+
+    # get avus for logical_path
+    collection_name, data_name = logical_path.rsplit("/", 1)
+    the_metadata = {}
+    for a, v, u in Query(callback, # do we need units?  json-schema is just key/value?
+                        "META_DATA_ATTR_NAME, META_DATA_ATTR_VALUE, META_DATA_ATTR_UNITS",
+                        "COLL_NAME = '{}' AND DATA_NAME = '{}'".format(collection_name, data_name)):
+        the_metadata[a] = v # will this stomp on identical a/v combinations, that have different units in the catalog?
+
+    # validate, return any errors
+    rc = mt_validate(callback, the_metadata, schemas)
+    if rc != 0:
+        rule_args[2] = rc
+
+
+def metadata_templates_collection_validate(rule_args, callback, rei):
+    # Validate collection (logical_path, schemas, recursive)
+    # - Run gather (above) to build the effective json schema
+    # - Get and build json payload with all current AVUs
+    # - Run payload and schema through validator
+    # - Return result (OK or failure/explanation)
+
+    logical_path = rule_args[0]
+    schemas = rule_args[1]
+    recursive = rule_args[2]
+
+    # find all data objects below this collection, and validate each one?
+    # TODO: or gather all at once, then validate each object individually (in parallel?)
+    data_objects = []
+    for coll_name, data_name in Query(callback,
+                                "COLL_NAME, DATA_NAME",
+                                "COLL_NAME like '{}%'".format(logical_path)):
+        data_objects.append("{}/{}".format(coll_name, data_name))
+
+    # loop through data_objects, validate each
+    callback.writeLine('serverLog', repr(data_objects))
+    errors = 'empty'
+    for data_object_path in data_objects:
+        callback.metadata_templates_data_object_validate(data_object_path, schemas, errors)
+
+        # if anything failed, log and error out
+        if errors:
+            callback.writeLine('serverLog', 'metadata_templates_collection_validate failed for [{}]'.format(logical_path))
+            return -3
