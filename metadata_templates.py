@@ -108,10 +108,10 @@ def mt_validate(callback, json_to_validate, schemas_string):
             errors.append(e)
     # if anything failed, log the errors
     if errors:
-        callback.writeLine('serverLog', 'SCHEMA ERRORS: {}'.format(repr(errors)))
-        return -2
+        callback.writeLine('serverLog', 'VALIDATE_ERRORS: {}'.format(repr(errors)))
+        return repr(errors)
     # success
-    return 0
+    return ""
 
 
 def metadata_templates_data_object_validate(rule_args, callback, rei):
@@ -132,13 +132,13 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         the_metadata[a] = v # will this stomp on identical a/v combinations, that have different units in the catalog?
 
     # validate, return any errors
-    rc = mt_validate(callback, the_metadata, schemas_string)
-#    callback.writeLine('serverLog', 'VALIDATION_RETURN_CODE: [{}]'.format(rc))
-    rule_args[2] = str(rc)
+    errors = mt_validate(callback, the_metadata, schemas_string)
+    callback.writeLine('serverLog', 'RETURNED_VALIDATION_ERRORS: [{}]'.format(errors))
+    rule_args[2] = errors
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate collection (logical_path, schemas_string, recursive)
+    # Validate collection (logical_path, schemas_string, recursive, errors)
     # - Loop through data objects, validate each
     # - Return result (OK or failure/explanation)
 
@@ -156,11 +156,11 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
 
     # loop through data_objects, validate each
     callback.writeLine('serverLog', repr(data_objects))
-    errors = 'empty'
     for data_object_path in data_objects:
-        callback.metadata_templates_data_object_validate(data_object_path, schemas, errors)
-
+        ret = callback.metadata_templates_data_object_validate(data_object_path, schemas, '')
+        errors = ret['arguments'][2]
+        callback.writeLine('serverLog', 'metadata_templates_data_object_validate_ERRORS: [{}]'.format(errors))
         # if anything failed, log and error out
         if errors:
             callback.writeLine('serverLog', 'metadata_templates_collection_validate failed for [{}]'.format(logical_path))
-            return -3
+            rule_args[3] = errors
