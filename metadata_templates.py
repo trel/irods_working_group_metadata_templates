@@ -65,8 +65,8 @@ def metadata_templates_collection_detach(rule_args, callback, rei):
 
 
 def metadata_templates_collection_gather(rule_args, callback, rei):
-    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas)
-    # - Find all associated schemas and construct effective schema
+    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas_string)
+    # - Find all associated schemas
     # - Recursive would check/gather all parents up to root
 
     logical_path = rule_args[0]
@@ -82,52 +82,46 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
             try:
                 # get the schema content from the location
                 r = requests.get(schema)
-#                callback.writeLine('serverLog', r.content)
                 # convert to json object
                 j = json.loads(r.content)
-#                callback.writeLine('serverLog', j)
                 # add to schemas array
-                # TODO: perhaps we should just store the string? rather than the json object?
                 schemas.append(j)
             except Exception as e:
-#                callback.writeLine('serverLog', '{}: {}'.format(type(e), e))
                 callback.writeLine('serverLog', '{}'.format(type(e)))
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
-#    combinedschema = {"type": object, "allOf": schemas}
-#    callback.writeLine('serverLog', type(combinedschema))
-    # can we return anything other than a string?  i was hoping for an array...
-      # do i have to put it into a rule_arg[]?
-    rule_args[2] = repr(schemas)
-#    rule_args[2] = schemas
-#    return schemas
+    # return serialized string
+    rule_args[2] = json.dumps(schemas)
 
 
-def mt_validate(callback, json_to_validate, schemas):
+def mt_validate(callback, json_to_validate, schemas_string):
     # run json_to_validate through each schema, collecting any errors
     errors = []
+#    callback.writeLine('serverLog', 'TYPE: ::{}:: SCHEMAS: ::{}::'.format(type(schemas_string), schemas_string))
+    schemas = json.loads(schemas_string)
+#    callback.writeLine('serverLog', 'TYPE: ::{}:: SCHEMAS_ARRAY: ::{}::'.format(type(schemas), schemas))
     for s in schemas:
-        schema_as_json = json.loads(s)
+#        callback.writeLine('serverLog', 'VALIDATING: ::{}::'.format(s))
         try:
-            jsonschema.validate(json_to_validate, schema_as_json)
+            jsonschema.validate(json_to_validate, s)
         except Exception as e:
             errors.append(e)
-    # if anything failed, return the errors
+    # if anything failed, log the errors
     if errors:
         callback.writeLine('serverLog', 'SCHEMA ERRORS: {}'.format(repr(errors)))
         return -2
-    # we did it
+    # success
     return 0
 
 
 def metadata_templates_data_object_validate(rule_args, callback, rei):
-    # Validate data object (logical_path, schemas, errors)
+    # Validate data object (logical_path, schemas_string, errors)
     # - Get and build json payload with all current AVUs
     # - Run payload and schemas through validator
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
-    schemas = rule_args[1]
+    schemas_string = rule_args[1]
 
     # get avus for logical_path
     collection_name, data_name = logical_path.rsplit("/", 1)
@@ -138,23 +132,21 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         the_metadata[a] = v # will this stomp on identical a/v combinations, that have different units in the catalog?
 
     # validate, return any errors
-    rc = mt_validate(callback, the_metadata, schemas)
-    if rc != 0:
-        rule_args[2] = rc
+    rc = mt_validate(callback, the_metadata, schemas_string)
+#    callback.writeLine('serverLog', 'VALIDATION_RETURN_CODE: [{}]'.format(rc))
+    rule_args[2] = str(rc)
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate collection (logical_path, schemas, recursive)
-    # - Run gather (above) to build the effective json schema
-    # - Get and build json payload with all current AVUs
-    # - Run payload and schema through validator
+    # Validate collection (logical_path, schemas_string, recursive)
+    # - Loop through data objects, validate each
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
     schemas = rule_args[1]
     recursive = rule_args[2]
 
-    # find all data objects below this collection, and validate each one?
+    # find all data objects in this collection
     # TODO: or gather all at once, then validate each object individually (in parallel?)
     data_objects = []
     for coll_name, data_name in Query(callback,
