@@ -189,3 +189,62 @@ teardown () {
     run iadmin rum
     [ $status -eq 0 ]
 }
+
+
+
+@test "validate collection" {
+    # main
+    run imkdir -p ${LOGICAL_PATH}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_A}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_B}
+    [ $status -eq 0 ]
+    run imeta set -d ${DATA_OBJECT_A} jsonrpc 2.0
+    [ $status -eq 0 ]
+    run imeta set -d ${DATA_OBJECT_A} method cherries
+    [ $status -eq 0 ]
+    run imeta set -d ${DATA_OBJECT_B} jsonrpc 2.0
+    [ $status -eq 0 ]
+    # attach
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_attach('*logical_path', '*schema_location', 'url')" \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    # validate and fail on method on DATA_OBJECT_B
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
+            metadata_templates_collection_validate('*logical_path', *schemas, *recursive, *errors); \
+            writeLine('stdout', *errors)" \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*errors=""' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[0]}" =~ "required property" ]]
+    # add it
+    run imeta set -d ${DATA_OBJECT_B} method darkchocolate
+    [ $status -eq 0 ]
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
+            metadata_templates_collection_validate('*logical_path', *schemas, *recursive, *errors); \
+            writeLine('stdout', *errors)" \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*errors=""' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    # validator is happy    
+    [[ "${lines[0]}" = '""' ]]
+
+    # cleanup
+    run irm -rf ${TEST_COLLECTION}
+    run iadmin rum
+    [ $status -eq 0 ]
+}
