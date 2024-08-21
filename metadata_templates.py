@@ -156,9 +156,9 @@ def mt_validate(callback, json_to_validate, schemas_string):
     # if anything failed, log the errors
     if errors:
         callback.writeLine('serverLog', 'VALIDATE_ERRORS: {}'.format(repr(errors)))
-        return repr(errors)
+        return errors
     # success
-    return ""
+    return []
 
 
 def mt_get_avus(logical_path, callback):
@@ -216,7 +216,7 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         errors = mt_validate(callback, the_metadata, schemas_string)
 
 #    callback.writeLine('serverLog', 'AFTER_VALIDATION_ERRORS: [{}]'.format(errors))
-    rule_args[3] = errors
+    rule_args[3] = repr(errors)
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):

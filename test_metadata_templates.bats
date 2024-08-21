@@ -181,8 +181,8 @@ teardown () {
     echo $status
     echo "output = ${output}"
     [ $status -eq 0 ]
-    # validator is happy    
-    [[ "${lines[0]}" = "" ]]
+    # validator is happy
+    [[ "${lines[0]}" = "[]" ]]
 
     # cleanup
     run irm -rf ${TEST_COLLECTION}
@@ -240,8 +240,8 @@ teardown () {
     echo $status
     echo "output = ${output}"
     [ $status -eq 0 ]
-    # validator is happy    
-    [[ "${lines[0]}" = '""' ]]
+    # validator is happy
+    [[ "${lines[0]}" = "[]" ]]
 
     # cleanup
     run irm -rf ${TEST_COLLECTION}
