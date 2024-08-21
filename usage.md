@@ -64,17 +64,17 @@ units: notaurl
 # gather, print to stdout
 
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=""' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=' ruleExecOut
 ```
 
 # validate data object
 
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_data_object_validate('*data_object_path', *schemas, *avu_function, *rc); writeLine('stdout', *rc)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=""%*data_object_path=/tempZone/home/rods/thedir/a.txt%*avu_function=""%*rc=""' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_data_object_validate('*data_object_path', *schemas, *avu_function, *rc); writeLine('stdout', *rc)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=%*data_object_path=/tempZone/home/rods/thedir/a.txt%*avu_function=%*rc=' ruleExecOut
 ```
 
 # validate a collection
 
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_collection_validate('*logical_path', *schemas, *avu_function, *recursive, *errors); writeLine('stdout', *errors)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=""%*avu_function=""%*errors=""' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_collection_validate('*logical_path', *schemas, *avu_function, *recursive, *errors); writeLine('stdout', *errors)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=%*avu_function=%*errors=' ruleExecOut
 ```

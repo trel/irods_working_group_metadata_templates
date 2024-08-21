@@ -216,7 +216,8 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         errors = mt_validate(callback, the_metadata, schemas_string)
 
 #    callback.writeLine('serverLog', 'AFTER_VALIDATION_ERRORS: [{}]'.format(errors))
-    rule_args[3] = repr(errors)
+    if errors:
+        rule_args[3] = repr(errors)
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
