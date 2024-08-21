@@ -27,13 +27,55 @@ teardown () {
     run iadmin rum
 }
 
-@test "collection - attach, gather, detach template" {
+@test "data object - attach, gather, detach template" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
     run itouch ${DATA_OBJECT_A}
     [ $status -eq 0 ]
-    run itouch ${DATA_OBJECT_B}
+    # attach and confirm AVU
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_attach('*logical_path', '*schema_location', 'url')" \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" =~ "attribute: irods::metadata_templates" ]]
+    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA}" ]]
+    [[ "${lines[3]}" =~ "units: url" ]]
+    # gather and confirm output has parsed JSON
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_gather('*logical_path', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${DATA_OBJECT_A}'%*schemas=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[0]}" =~ "json-schema.org" ]]
+    # detach and confirm no AVUs
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_detach('*logical_path', '*schema_location', 'url')" \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" = "None" ]]
+    # cleanup
+    run irm -rf ${TEST_COLLECTION}
+    run iadmin rum
+    [ $status -eq 0 ]
+}
+
+@test "collection - attach, gather, detach template" {
+    # main
+    run imkdir -p ${LOGICAL_PATH}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_A}
     [ $status -eq 0 ]
     # attach and confirm AVU
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
@@ -73,7 +115,38 @@ teardown () {
     [ $status -eq 0 ]
 }
 
-@test "attach bad schema" {
+@test "data object - attach bad schema" {
+    # main
+    run imkdir -p ${LOGICAL_PATH}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_A}
+    [ $status -eq 0 ]
+    # attach bad schema
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_attach('*logical_path', '*schema_location', 'url')" \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${BAD_SCHEMA} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    # gather and confirm no JSON parsed correctly
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_gather('*logical_path', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${DATA_OBJECT_A}'%*schemas=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[0]}" = "[]" ]]
+    # cleanup
+    run irm -rf ${TEST_COLLECTION}
+    run iadmin rum
+    [ $status -eq 0 ]
+}
+
+@test "collection - attach bad schema" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
@@ -104,7 +177,7 @@ teardown () {
     [ $status -eq 0 ]
 }
 
-@test "validate data object" {
+@test "data object - validate" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
@@ -190,9 +263,7 @@ teardown () {
     [ $status -eq 0 ]
 }
 
-
-
-@test "validate collection" {
+@test "collection - validate" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
