@@ -225,7 +225,7 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
-    schemas = rule_args[1]
+    schemas_string = rule_args[1]
     avu_builder_function = rule_args[2]
     recursive = rule_args[3]
 
@@ -240,7 +240,7 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
     # loop through data_objects, validate each
     callback.writeLine('serverLog', repr(data_objects))
     for data_object_path in data_objects:
-        ret = callback.metadata_templates_data_object_validate(data_object_path, schemas, avu_builder_function, '')
+        ret = callback.metadata_templates_data_object_validate(data_object_path, schemas_string, avu_builder_function, '')
         errors = ret['arguments'][3]
         callback.writeLine('serverLog', 'metadata_templates_data_object_validate_ERRORS: [{}]'.format(errors))
         # if anything failed, log and error out
