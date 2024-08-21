@@ -11,7 +11,8 @@ LOGICAL_PATH=${TEST_COLLECTION}/${SUBCOLLECTION}
 DATA_OBJECT_A=${LOGICAL_PATH}/a.txt
 DATA_OBJECT_B=${LOGICAL_PATH}/b.txt
 
-GOOD_SCHEMA=https://raw.githubusercontent.com/fge/sample-json-schemas/master/jsonrpc2.0/jsonrpc-request-2.0.json
+GOOD_SCHEMA_A=https://raw.githubusercontent.com/fge/sample-json-schemas/master/jsonrpc2.0/jsonrpc-request-2.0.json
+GOOD_SCHEMA_B=https://raw.githubusercontent.com/irods/irods/main/schemas/configuration/v4/plugin.json.in
 BAD_SCHEMA=https://example.org
 ############
 
@@ -36,19 +37,19 @@ teardown () {
     # attach and confirm AVU
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_data_object_attach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     run imeta ls -d ${DATA_OBJECT_A}
     echo "output = ${output}"
     [ $status -eq 0 ]
     [[ "${lines[1]}" =~ "attribute: irods::metadata_templates" ]]
-    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA}" ]]
+    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA_A}" ]]
     [[ "${lines[3]}" =~ "units: url" ]]
     # gather and confirm output has parsed JSON
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
-        "metadata_templates_data_object_gather('*logical_path', *schemas); writeLine('stdout', *schemas)" \
-        '*logical_path='${DATA_OBJECT_A}'%*schemas=' \
+        "metadata_templates_data_object_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${DATA_OBJECT_A}'%*recursive=0%*schemas=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -58,7 +59,7 @@ teardown () {
     # detach and confirm no AVUs
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_data_object_detach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     run imeta ls -d ${DATA_OBJECT_A}
@@ -80,14 +81,14 @@ teardown () {
     # attach and confirm AVU
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_attach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     run imeta ls -C ${LOGICAL_PATH}
     echo "output = ${output}"
     [ $status -eq 0 ]
     [[ "${lines[1]}" =~ "attribute: irods::metadata_templates" ]]
-    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA}" ]]
+    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA_A}" ]]
     [[ "${lines[3]}" =~ "units: url" ]]
     # gather and confirm output has parsed JSON
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
@@ -102,7 +103,7 @@ teardown () {
     # detach and confirm no AVUs
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_detach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     run imeta ls -C ${LOGICAL_PATH}
@@ -132,8 +133,8 @@ teardown () {
     [ $status -eq 0 ]
     # gather and confirm no JSON parsed correctly
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
-        "metadata_templates_data_object_gather('*logical_path', *schemas); writeLine('stdout', *schemas)" \
-        '*logical_path='${DATA_OBJECT_A}'%*schemas=' \
+        "metadata_templates_data_object_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${DATA_OBJECT_A}'%*recursive=0%*schemas=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -186,7 +187,7 @@ teardown () {
     # attach
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_attach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -256,6 +257,52 @@ teardown () {
     [ $status -eq 0 ]
     # validator is happy
     [[ "${lines[0]}" = "" ]]
+    # additional schema on parent collection
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_attach('*logical_path', '*schema_location', 'url')" \
+        '*logical_path='${TEST_COLLECTION}'%*schema_location='${GOOD_SCHEMA_B} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    run imeta ls -C ${TEST_COLLECTION}
+    echo $output
+    [ $status -eq 0 ]
+    # validate with recursion, should fail
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_gather('*data_object_path', '*recursive', *schemas); \
+            metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
+            writeLine('stdout', *rc)" \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=1%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=%*rc=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    # validator is not yet satisfied
+    [[ "${lines[0]}" =~ "required property" ]]
+    # add avu, should pass with recursion
+    run imeta set -d ${DATA_OBJECT_A} checksum_sha256 a
+    run imeta set -d ${DATA_OBJECT_A} name b
+    run imeta set -d ${DATA_OBJECT_A} type c
+    run imeta set -d ${DATA_OBJECT_A} version d
+    [ $status -eq 0 ]
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo $output
+    [ $status -eq 0 ]
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
+            metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
+            writeLine('stdout', *rc)" \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=1%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=%*rc=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    # validator is happy
+    [[ "${lines[0]}" = "" ]]
 
     # cleanup
     run irm -rf ${TEST_COLLECTION}
@@ -280,7 +327,7 @@ teardown () {
     # attach
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_attach('*logical_path', '*schema_location', 'url')" \
-        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA} \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_A} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -289,7 +336,7 @@ teardown () {
     # validate and fail on method on DATA_OBJECT_B
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
-            metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *recursive, *errors); \
+            metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *errors); \
             writeLine('stdout', *errors)" \
         '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*avu_function=%*errors=' \
         ruleExecOut
@@ -303,7 +350,7 @@ teardown () {
     [ $status -eq 0 ]
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
-            metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *recursive, *errors); \
+            metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *errors); \
             writeLine('stdout', *errors)" \
         '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*avu_function=%*errors=' \
         ruleExecOut
