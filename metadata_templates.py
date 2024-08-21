@@ -197,7 +197,7 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         try:
             # import and execute the defined function
 #            callback.writeLine('serverLog', 'trying to load module [{0}]'.format(avu_builder_function))
-            modulename, funcname = avu_builder_function.split('.', 2)
+            modulename, funcname = avu_builder_function.split('.', 1)
             module = __import__(modulename)
             func = getattr(module, funcname)
             the_metadata = func(logical_path, callback)
