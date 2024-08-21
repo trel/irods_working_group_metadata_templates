@@ -114,37 +114,73 @@ def mt_validate(callback, json_to_validate, schemas_string):
     return ""
 
 
+def mt_get_avus(logical_path, callback):
+    # Naive implementation to get AVUs for a logical path
+    # - Will stomp on identical attributes with multiple values
+    # - Will stomp on identical a/v combinations with different units
+
+    # get AVUs
+    collection_name, data_name = logical_path.rsplit("/", 1)
+#    callback.writeLine('serverLog', 'mt_get_avus - collection_name [{0}] data_name [{1}]'.format(collection_name, data_name))
+    the_metadata = {}
+    for a, v in Query(callback,
+                        "META_DATA_ATTR_NAME, META_DATA_ATTR_VALUE",
+                        "COLL_NAME = '{}' AND DATA_NAME = '{}'".format(collection_name, data_name)):
+        the_metadata[a] = v # stomping here
+#        callback.writeLine('serverLog', 'in avu loop... the_metadata [{0}]'.format(the_metadata))
+
+    # return dict
+#    callback.writeLine('serverLog', 'mt_get_avus - the_metadata [{0}]'.format(the_metadata))
+    return the_metadata
+
 def metadata_templates_data_object_validate(rule_args, callback, rei):
-    # Validate data object (logical_path, schemas_string, errors)
+    # Validate data object (logical_path, schemas_string, avu_builder_function, errors)
     # - Get and build json payload with all current AVUs
     # - Run payload and schemas through validator
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
     schemas_string = rule_args[1]
+    avu_builder_function = rule_args[2]
 
-    # get avus for logical_path
-    collection_name, data_name = logical_path.rsplit("/", 1)
     the_metadata = {}
-    for a, v, u in Query(callback, # do we need units?  json-schema is just key/value?
-                        "META_DATA_ATTR_NAME, META_DATA_ATTR_VALUE, META_DATA_ATTR_UNITS",
-                        "COLL_NAME = '{}' AND DATA_NAME = '{}'".format(collection_name, data_name)):
-        the_metadata[a] = v # will this stomp on identical a/v combinations, that have different units in the catalog?
+    errors = []
+    if avu_builder_function in ['', '""']:
+        # no function defined, call naive implementation
+#        callback.writeLine('serverLog', 'function name empty, executing mt_get_avus [{0}]'.format(logical_path))
+        the_metadata = mt_get_avus(logical_path, callback)
+#        callback.writeLine('serverLog', 'just after mt_get_avus - the_metadata [{0}]'.format(the_metadata))
+    else:
+        try:
+            # import and execute the defined function
+#            callback.writeLine('serverLog', 'trying to load module [{0}]'.format(avu_builder_function))
+            modulename, funcname = avu_builder_function.split('.', 2)
+            module = __import__(modulename)
+            func = getattr(module, funcname)
+            the_metadata = func(logical_path, callback)
+        except (ModuleNotFoundError, AttributeError, ValueError):
+#            callback.writeLine('serverLog', 'except triggered, function [{0}] not found'.format(avu_builder_function))
+            errors = ['function [{0}] not found'.format(avu_builder_function)]
 
-    # validate, return any errors
-    errors = mt_validate(callback, the_metadata, schemas_string)
-    callback.writeLine('serverLog', 'RETURNED_VALIDATION_ERRORS: [{}]'.format(errors))
-    rule_args[2] = errors
+#    callback.writeLine('serverLog', 'the_metadata [{0}]'.format(the_metadata))
+    if not errors:
+        # no exception occurred
+        # validate, catch validation errors
+        errors = mt_validate(callback, the_metadata, schemas_string)
+
+#    callback.writeLine('serverLog', 'AFTER_VALIDATION_ERRORS: [{}]'.format(errors))
+    rule_args[3] = errors
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate collection (logical_path, schemas_string, recursive, errors)
+    # Validate collection (logical_path, schemas_string, avu_builder_function, recursive, errors)
     # - Loop through data objects, validate each
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
     schemas = rule_args[1]
-    recursive = rule_args[2]
+    avu_builder_function = rule_args[2]
+    recursive = rule_args[3]
 
     # find all data objects in this collection
     # TODO: or gather all at once, then validate each object individually (in parallel?)
@@ -157,10 +193,10 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
     # loop through data_objects, validate each
     callback.writeLine('serverLog', repr(data_objects))
     for data_object_path in data_objects:
-        ret = callback.metadata_templates_data_object_validate(data_object_path, schemas, '')
-        errors = ret['arguments'][2]
+        ret = callback.metadata_templates_data_object_validate(data_object_path, schemas, avu_builder_function, '')
+        errors = ret['arguments'][3]
         callback.writeLine('serverLog', 'metadata_templates_data_object_validate_ERRORS: [{}]'.format(errors))
         # if anything failed, log and error out
         if errors:
             callback.writeLine('serverLog', 'metadata_templates_collection_validate failed for [{}]'.format(logical_path))
-            rule_args[3] = errors
+            rule_args[4] = errors
