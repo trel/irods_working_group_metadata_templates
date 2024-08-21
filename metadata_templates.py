@@ -192,12 +192,8 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
 
     the_metadata = {}
     errors = []
-    if avu_builder_function in ['', '""']:
-        # no function defined, call naive implementation
-#        callback.writeLine('serverLog', 'function name empty, executing mt_get_avus [{0}]'.format(logical_path))
-        the_metadata = mt_get_avus(logical_path, callback)
-#        callback.writeLine('serverLog', 'just after mt_get_avus - the_metadata [{0}]'.format(the_metadata))
-    else:
+    if avu_builder_function:
+        # function defined
         try:
             # import and execute the defined function
 #            callback.writeLine('serverLog', 'trying to load module [{0}]'.format(avu_builder_function))
@@ -208,6 +204,11 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
         except (ModuleNotFoundError, AttributeError, ValueError):
 #            callback.writeLine('serverLog', 'except triggered, function [{0}] not found'.format(avu_builder_function))
             errors = ['function [{0}] not found'.format(avu_builder_function)]
+    else:
+        # no function defined, call naive implementation
+#        callback.writeLine('serverLog', 'function name empty, executing mt_get_avus [{0}]'.format(logical_path))
+        the_metadata = mt_get_avus(logical_path, callback)
+#        callback.writeLine('serverLog', 'just after mt_get_avus - the_metadata [{0}]'.format(the_metadata))
 
 #    callback.writeLine('serverLog', 'the_metadata [{0}]'.format(the_metadata))
     if not errors:
