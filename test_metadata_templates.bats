@@ -50,7 +50,7 @@ teardown () {
     # gather and confirm output has parsed JSON
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -91,7 +91,7 @@ teardown () {
     # gather and confirm no JSON parsed correctly
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -124,7 +124,7 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
             writeLine('stdout', *rc)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*data_object_path='${DATA_OBJECT_A}'%*avu_function=leuven.build_fancy_dict%*rc=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=leuven.build_fancy_dict%*rc=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -141,7 +141,7 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
             writeLine('stdout', *rc)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*data_object_path='${DATA_OBJECT_A}'%*avu_function=""%*rc=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=%*rc=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -158,7 +158,7 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
             writeLine('stdout', *rc)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*data_object_path='${DATA_OBJECT_A}'%*avu_function=""%*rc=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=%*rc=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -175,14 +175,14 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_data_object_validate('*data_object_path', *schemas, '*avu_function', *rc); \
             writeLine('stdout', *rc)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*data_object_path='${DATA_OBJECT_A}'%*avu_function=""%*rc=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*data_object_path='${DATA_OBJECT_A}'%*avu_function=%*rc=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
     echo "output = ${output}"
     [ $status -eq 0 ]
     # validator is happy
-    [[ "${lines[0]}" = "[]" ]]
+    [[ "${lines[0]}" = "" ]]
 
     # cleanup
     run irm -rf ${TEST_COLLECTION}
@@ -220,7 +220,7 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *recursive, *errors); \
             writeLine('stdout', *errors)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*avu_function=""%*errors=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*avu_function=%*errors=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
@@ -234,14 +234,14 @@ teardown () {
         "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); \
             metadata_templates_collection_validate('*logical_path', *schemas, '*avu_function', *recursive, *errors); \
             writeLine('stdout', *errors)" \
-        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=""%*avu_function=""%*errors=""' \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=%*avu_function=%*errors=' \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     echo $status
     echo "output = ${output}"
     [ $status -eq 0 ]
     # validator is happy
-    [[ "${lines[0]}" = "[]" ]]
+    [[ "${lines[0]}" = "" ]]
 
     # cleanup
     run irm -rf ${TEST_COLLECTION}
