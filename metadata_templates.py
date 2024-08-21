@@ -48,6 +48,14 @@ def mt_detach(callback, entity_name, entity_type, value, units):
     ### something something ... result['arguments'][0]
 
 
+def metadata_templates_data_object_attach(rule_args, callback, rei):
+    # Attach (logical_path, schema, type)
+    logical_path = rule_args[0]
+    schema = rule_args[1]
+    type = rule_args[2]
+    result = mt_attach(callback, logical_path, 'data_object', schema, type)
+
+
 def metadata_templates_collection_attach(rule_args, callback, rei):
     # Attach (logical_path, schema, type)
     logical_path = rule_args[0]
@@ -56,12 +64,51 @@ def metadata_templates_collection_attach(rule_args, callback, rei):
     result = mt_attach(callback, logical_path, 'collection', schema, type)
 
 
+def metadata_templates_data_object_detach(rule_args, callback, rei):
+    # Detach (logical_path, schema, type)
+    logical_path = rule_args[0]
+    schema = rule_args[1]
+    type = rule_args[2]
+    result = mt_detach(callback, logical_path, 'data_object', schema, type)
+
+
 def metadata_templates_collection_detach(rule_args, callback, rei):
     # Detach (logical_path, schema, type)
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
     result = mt_detach(callback, logical_path, 'collection', schema, type)
+
+
+def metadata_templates_data_object_gather(rule_args, callback, rei):
+    # Export/Collapse/Rasterize/Gather/Dump (logical_path, schemas_string)
+    # - Find all associated schemas
+
+    logical_path = rule_args[0]
+
+    # split logical path
+    collection_name, data_name = logical_path.rsplit("/", 1)
+
+    # get all schema locations attached to this data object
+    schemas = []
+    for schema, thetype in Query(callback,
+                        "META_DATA_ATTR_VALUE, META_DATA_ATTR_UNITS",
+                        "COLL_NAME = '{}' and DATA_NAME = '{}' and META_DATA_ATTR_NAME = '{}'".format(collection_name, data_name, MT_NAMESPACE)):
+        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
+        if thetype == 'url':
+            try:
+                # get the schema content from the location
+                r = requests.get(schema)
+                # convert to json object
+                j = json.loads(r.content)
+                # add to schemas array
+                schemas.append(j)
+            except Exception as e:
+                callback.writeLine('serverLog', '{}'.format(type(e)))
+        else:
+            callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
+    # return serialized string
+    rule_args[1] = json.dumps(schemas)
 
 
 def metadata_templates_collection_gather(rule_args, callback, rei):
