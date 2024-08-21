@@ -81,10 +81,12 @@ def metadata_templates_collection_detach(rule_args, callback, rei):
 
 
 def metadata_templates_data_object_gather(rule_args, callback, rei):
-    # Export/Collapse/Rasterize/Gather/Dump (logical_path, schemas_string)
+    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas_string)
     # - Find all associated schemas
+    # - Recursive gathers schemas on all parents up to root
 
     logical_path = rule_args[0]
+    recursive = rule_args[1]
 
     # split logical path
     collection_name, data_name = logical_path.rsplit("/", 1)
@@ -94,7 +96,7 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
     for schema, thetype in Query(callback,
                         "META_DATA_ATTR_VALUE, META_DATA_ATTR_UNITS",
                         "COLL_NAME = '{}' and DATA_NAME = '{}' and META_DATA_ATTR_NAME = '{}'".format(collection_name, data_name, MT_NAMESPACE)):
-        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
+#        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
         if thetype == 'url':
             try:
                 # get the schema content from the location
@@ -107,14 +109,30 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
                 callback.writeLine('serverLog', '{}'.format(type(e)))
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
+
+    # if recursive,
+    # get all schema locations attached to this data object's parent collection, recursively
+#    callback.writeLine('serverLog', 'metadata_templates_data_object_gather: before recursive flag')
+#    callback.writeLine('serverLog', 'length of schemas [{0}]'.format(len(schemas)))
+    if int(recursive):
+#        callback.writeLine('serverLog', 'metadata_templates_data_object_gather: inside recursive flag [{0}]'.format(logical_path))
+        ret = callback.metadata_templates_collection_gather(collection_name, recursive, '')
+        parents_schemas_string = ret['arguments'][2]
+#        callback.writeLine('serverLog', 'parents_schemas_string [{0}]'.format(parents_schemas_string))
+        parents_schemas = json.loads(parents_schemas_string)
+        schemas.extend(parents_schemas)
+#        callback.writeLine('serverLog', 'length of schemas [{0}]'.format(len(schemas)))
+
     # return serialized string
-    rule_args[1] = json.dumps(schemas)
+#    callback.writeLine('serverLog', 'metadata_templates_data_object_gather: after recursive flag')
+#    callback.writeLine('serverLog', 'end of data_object_gather - length of schemas [{0}]'.format(len(schemas)))
+    rule_args[2] = json.dumps(schemas)
 
 
 def metadata_templates_collection_gather(rule_args, callback, rei):
     # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas_string)
     # - Find all associated schemas
-    # - Recursive would check/gather all parents up to root
+    # - Recursive gathers schemas on all parents up to root
 
     logical_path = rule_args[0]
     recursive = rule_args[1]
@@ -124,7 +142,7 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
     for schema, thetype in Query(callback,
                         "META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS",
                         "COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}'".format(logical_path, MT_NAMESPACE)):
-        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
+#        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
         if thetype == 'url':
             try:
                 # get the schema content from the location
@@ -137,7 +155,26 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
                 callback.writeLine('serverLog', '{}'.format(type(e)))
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
+
+    # if recursive (and not the root),
+    # get all schema locations attached to this collection's parent collection, recursively
+#    callback.writeLine('serverLog', 'metadata_templates_collection_gather: before recursive flag')
+#    callback.writeLine('serverLog', 'length of schemas [{0}]'.format(len(schemas)))
+    if int(recursive) and logical_path not in ['', '/']:
+#        callback.writeLine('serverLog', 'metadata_templates_collection_gather: inside recursive flag [{0}]'.format(logical_path))
+
+        # clean and split logical path
+        parent_name, this_collection_name = logical_path.strip().rstrip('/').rsplit("/", 1)
+
+        ret = callback.metadata_templates_collection_gather(parent_name, recursive, '')
+        parents_schemas_string = ret['arguments'][2]
+#        callback.writeLine('serverLog', 'parents_schemas_string [{0}]'.format(parents_schemas_string))
+        parents_schemas = json.loads(parents_schemas_string)
+        schemas.extend(parents_schemas)
+
     # return serialized string
+#    callback.writeLine('serverLog', 'metadata_templates_collection_gather: after recursive flag')
+#    callback.writeLine('serverLog', 'end of collection_gather - length of schemas [{0}]'.format(len(schemas)))
     rule_args[2] = json.dumps(schemas)
 
 
@@ -222,14 +259,13 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate collection (logical_path, schemas_string, avu_builder_function, recursive, errors)
+    # Validate collection (logical_path, schemas_string, avu_builder_function, errors)
     # - Loop through data objects, validate each
     # - Return result (OK or failure/explanation)
 
     logical_path = rule_args[0]
     schemas_string = rule_args[1]
     avu_builder_function = rule_args[2]
-    recursive = rule_args[3]
 
     # find all data objects in this collection
     # TODO: or gather all at once, then validate each object individually (in parallel?)
@@ -248,4 +284,4 @@ def metadata_templates_collection_validate(rule_args, callback, rei):
         # if anything failed, log and error out
         if errors:
             callback.writeLine('serverLog', 'metadata_templates_collection_validate failed for [{}]'.format(logical_path))
-            rule_args[4] = errors
+            rule_args[3] = errors

@@ -76,5 +76,5 @@ $ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templ
 # validate a collection
 
 ```
-$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_collection_validate('*logical_path', *schemas, *avu_function, *recursive, *errors); writeLine('stdout', *errors)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=%*avu_function=%*errors=' ruleExecOut
+$ irule -r irods_rule_engine_plugin-irods_rule_language-instance "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); metadata_templates_collection_validate('*logical_path', *schemas, *avu_function, *errors); writeLine('stdout', *errors)" '*logical_path=/tempZone/home/rods/thedir%*recursive=0%*schemas=%*avu_function=%*errors=' ruleExecOut
 ```
