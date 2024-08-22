@@ -33,19 +33,15 @@ def mt_build_json_input(entity_name, entity_type, operation, value, units):
 def mt_attach(callback, entity_name, entity_type, value, units):
     # build JSON input for atomic payload
     json_input = mt_build_json_input(entity_name, entity_type, 'add', value, units)
-    # call atomic
-    result = callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), "")
-    # check for errors
-    ### something something ... result['arguments'][0]
+    # call atomic, assume any errors will show up in the serverLog
+    callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), '')
 
 
 def mt_detach(callback, entity_name, entity_type, value, units):
     # build JSON input for atomic payload
     json_input = mt_build_json_input(entity_name, entity_type, 'remove', value, units)
-    # call atomic
-    result = callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), "")
-    # check for errors
-    ### something something ... result['arguments'][0]
+    # call atomic, assume any errors will show up in the serverLog
+    callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), '')
 
 
 def metadata_templates_data_object_attach(rule_args, callback, rei):
