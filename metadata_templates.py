@@ -105,13 +105,11 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
             except Exception as e:
                 callback.writeLine('serverLog', '{}'.format(type(e)))
         elif thetype == 'irods':
-            # get length of iRODS full logical path
-            ret = callback.msiObjStat(schema, irods_types.RodsObjStat())
-            objstat = ret['arguments'][1]
             # get schema contents from iRODS full logical path
             ret = callback.msiDataObjOpen(schema, 0)
             fd = ret['arguments'][1] # iRODS file descriptor
-            ret = callback.msiDataObjRead(fd, objstat.objSize, irods_types.BytesBuf())
+            maxsize = (1<<31)-1 # maximum size - only contents of filesize will actually be read
+            ret = callback.msiDataObjRead(fd, maxsize, irods_types.BytesBuf())
             buf = ret['arguments'][2] # bytesbuf
             byteslist = buf.get_bytes() # schema contents as list of bytes as integers
             callback.msiDataObjClose(fd, 0)
