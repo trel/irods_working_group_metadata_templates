@@ -30,7 +30,7 @@ teardown () {
     run iadmin rum
 }
 
-@test "data object - attach, gather, detach template" {
+@test "data object - attach, gather, detach template from URL" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
@@ -162,7 +162,7 @@ teardown () {
     [ $status -eq 0 ]
 }
 
-@test "collection - attach, gather, detach template" {
+@test "collection - attach, gather, detach template from URL" {
     # main
     run imkdir -p ${LOGICAL_PATH}
     [ $status -eq 0 ]
