@@ -11,6 +11,7 @@ import jsonschema
 import requests
 
 from genquery import *
+import irods_types
 
 MT_NAMESPACE = 'irods::metadata_templates'
 
@@ -103,6 +104,21 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
                 schemas.append(j)
             except Exception as e:
                 callback.writeLine('serverLog', '{}'.format(type(e)))
+        elif thetype == 'irods':
+            # get length of iRODS full logical path
+            ret = callback.msiObjStat(schema, irods_types.RodsObjStat())
+            objstat = ret['arguments'][1]
+            # get schema contents from iRODS full logical path
+            ret = callback.msiDataObjOpen(schema, 0)
+            fd = ret['arguments'][1] # iRODS file descriptor
+            ret = callback.msiDataObjRead(fd, objstat.objSize, irods_types.BytesBuf())
+            buf = ret['arguments'][2] # bytesbuf
+            byteslist = buf.get_bytes() # schema contents as list of bytes as integers
+            callback.msiDataObjClose(fd, 0)
+            # convert to json object
+            j = json.loads(bytes(byteslist).decode("utf-8"))
+            # add to schemas array
+            schemas.append(j)
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
 
@@ -157,6 +173,21 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
                 schemas.append(j)
             except Exception as e:
                 callback.writeLine('serverLog', '{}'.format(type(e)))
+        elif thetype == 'irods':
+            # get length of iRODS full logical path
+            ret = callback.msiObjStat(schema, irods_types.RodsObjStat())
+            objstat = ret['arguments'][1]
+            # get schema contents from iRODS full logical path
+            ret = callback.msiDataObjOpen(schema, 0)
+            fd = ret['arguments'][1] # iRODS file descriptor
+            ret = callback.msiDataObjRead(fd, objstat.objSize, irods_types.BytesBuf())
+            buf = ret['arguments'][2] # bytesbuf
+            byteslist = buf.get_bytes() # schema contents as list of bytes as integers
+            callback.msiDataObjClose(fd, 0)
+            # convert to json object
+            j = json.loads(bytes(byteslist).decode("utf-8"))
+            # add to schemas array
+            schemas.append(j)
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
 
