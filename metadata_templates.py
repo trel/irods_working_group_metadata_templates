@@ -156,17 +156,31 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
     # get all schema locations attached to this collection's parent collection, recursively
 #    callback.writeLine('serverLog', 'metadata_templates_collection_gather: before recursive flag')
 #    callback.writeLine('serverLog', 'length of schemas [{0}]'.format(len(schemas)))
-    if int(recursive) and logical_path not in ['', '/']:
-#        callback.writeLine('serverLog', 'metadata_templates_collection_gather: inside recursive flag [{0}]'.format(logical_path))
+    if int(recursive):
+        callback.writeLine('serverLog', 'metadata_templates_collection_gather: inside recursive flag [{0}]'.format(logical_path))
 
-        # clean and split logical path
-        parent_name, this_collection_name = logical_path.strip().rstrip('/').rsplit("/", 1)
-
-        ret = callback.metadata_templates_collection_gather(parent_name, recursive, '')
-        parents_schemas_string = ret['arguments'][2]
-#        callback.writeLine('serverLog', 'parents_schemas_string [{0}]'.format(parents_schemas_string))
-        parents_schemas = json.loads(parents_schemas_string)
-        schemas.extend(parents_schemas)
+        clean_logical_path = logical_path.rstrip('/')
+        if logical_path.count('/') == 0:
+            callback.writeLine('serverLog', 'metadata_templates_collection_gather: no forward slashes found, stopping')
+        elif logical_path[0] != '/':
+            callback.writeLine('serverLog', 'metadata_templates_collection_gather: not an absolute path, stopping')
+        elif logical_path  == '/':
+            callback.writeLine('serverLog', 'metadata_templates_collection_gather: found /, complete')
+        elif clean_logical_path.count('/') == 1:
+            # found the top level zone, call gather on root (/)
+            ret = callback.metadata_templates_collection_gather('/', recursive, '')
+            root_schemas_string = ret['arguments'][2]
+#            callback.writeLine('serverLog', 'root_schemas_string [{0}]'.format(root_schemas_string))
+            root_schemas = json.loads(root_schemas_string)
+            schemas.extend(root_schemas)
+        else:
+            # call gather on parent
+            parent_name, _ = clean_logical_path.rsplit('/', 1)
+            ret = callback.metadata_templates_collection_gather(parent_name, recursive, '')
+            parents_schemas_string = ret['arguments'][2]
+#            callback.writeLine('serverLog', 'parents_schemas_string [{0}]'.format(parents_schemas_string))
+            parents_schemas = json.loads(parents_schemas_string)
+            schemas.extend(parents_schemas)
 
     # return serialized string
 #    callback.writeLine('serverLog', 'metadata_templates_collection_gather: after recursive flag')
