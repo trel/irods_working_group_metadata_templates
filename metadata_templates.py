@@ -119,6 +119,14 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
             j = json.loads(bytes(byteslist).decode("utf-8"))
             # add to schemas array
             schemas.append(j)
+        elif thetype == 'local':
+            # get contents
+            with open(schema, 'r') as f:
+                content = f.read()
+                # convert to json object
+                j = json.loads(content)
+                # add to schemas array
+                schemas.append(j)
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
 
@@ -188,6 +196,14 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
             j = json.loads(bytes(byteslist).decode("utf-8"))
             # add to schemas array
             schemas.append(j)
+        elif thetype == 'local':
+            # get contents
+            with open(schema, 'r') as f:
+                content = f.read()
+                # convert to json object
+                j = json.loads(content)
+                # add to schemas array
+                schemas.append(j)
         else:
             callback.writeLine('serverLog', 'Type [{}] Not Supported By Metadata Templates'.format(thetype))
 

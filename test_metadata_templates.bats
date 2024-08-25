@@ -14,6 +14,7 @@ DATA_OBJECT_B=${LOGICAL_PATH}/b.txt
 GOOD_SCHEMA_A=https://raw.githubusercontent.com/fge/sample-json-schemas/master/jsonrpc2.0/jsonrpc-request-2.0.json
 GOOD_SCHEMA_B=https://raw.githubusercontent.com/irods/irods/main/schemas/configuration/v4/plugin.json.in
 GOOD_SCHEMA_IRODS=/tempZone/home/rods/sample.json
+GOOD_SCHEMA_LOCAL=/tmp/sample.json
 BAD_SCHEMA=https://example.org
 ############
 
@@ -117,6 +118,50 @@ teardown () {
     [ $status -eq 0 ]
 }
 
+@test "data object - attach, gather, detach template from local" {
+    # main
+    run imkdir -p ${LOGICAL_PATH}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_A}
+    [ $status -eq 0 ]
+    # attach and confirm AVU
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_attach('*logical_path', '*schema_location', 'local')" \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA_LOCAL} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" =~ "attribute: irods::metadata_templates" ]]
+    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA_LOCAL}" ]]
+    [[ "${lines[3]}" =~ "units: local" ]]
+    # gather and confirm output has parsed JSON
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${DATA_OBJECT_A}'%*recursive=0%*schemas=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[0]}" =~ "json-schema.org" ]]
+    # detach and confirm no AVUs
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_data_object_detach('*logical_path', '*schema_location', 'local')" \
+        '*logical_path='${DATA_OBJECT_A}'%*schema_location='${GOOD_SCHEMA_LOCAL} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -d ${DATA_OBJECT_A}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" = "None" ]]
+    # cleanup
+    run irm -rf ${TEST_COLLECTION}
+    run iadmin rum
+    [ $status -eq 0 ]
+}
+
 @test "collection - attach, gather, detach template" {
     # main
     run imkdir -p ${LOGICAL_PATH}
@@ -193,6 +238,50 @@ teardown () {
     run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
         "metadata_templates_collection_detach('*logical_path', '*schema_location', 'irods')" \
         '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_IRODS} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -C ${LOGICAL_PATH}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" = "None" ]]
+    # cleanup
+    run irm -rf ${TEST_COLLECTION}
+    run iadmin rum
+    [ $status -eq 0 ]
+}
+
+@test "collection - attach, gather, detach template from local" {
+    # main
+    run imkdir -p ${LOGICAL_PATH}
+    [ $status -eq 0 ]
+    run itouch ${DATA_OBJECT_A}
+    [ $status -eq 0 ]
+    # attach and confirm AVU
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_attach('*logical_path', '*schema_location', 'local')" \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_LOCAL} \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    run imeta ls -C ${LOGICAL_PATH}
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[1]}" =~ "attribute: irods::metadata_templates" ]]
+    [[ "${lines[2]}" =~ "value: ${GOOD_SCHEMA_LOCAL}" ]]
+    [[ "${lines[3]}" =~ "units: local" ]]
+    # gather and confirm output has parsed JSON
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_gather('*logical_path', '*recursive', *schemas); writeLine('stdout', *schemas)" \
+        '*logical_path='${LOGICAL_PATH}'%*recursive=0%*schemas=' \
+        ruleExecOut
+    echo $BATS_RUN_COMMAND
+    echo $status
+    echo "output = ${output}"
+    [ $status -eq 0 ]
+    [[ "${lines[0]}" =~ "json-schema.org" ]]
+    # detach and confirm no AVUs
+    run irule -r irods_rule_engine_plugin-irods_rule_language-instance \
+        "metadata_templates_collection_detach('*logical_path', '*schema_location', 'local')" \
+        '*logical_path='${LOGICAL_PATH}'%*schema_location='${GOOD_SCHEMA_LOCAL} \
         ruleExecOut
     echo $BATS_RUN_COMMAND
     run imeta ls -C ${LOGICAL_PATH}
