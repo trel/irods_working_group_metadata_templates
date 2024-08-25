@@ -133,11 +133,19 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
     logical_path = rule_args[0]
     recursive = rule_args[1]
 
+    # clean the logical path
+    if logical_path == '/':
+        # don't touch it, already the root
+        clean_logical_path = logical_path
+    else:
+        # remove any trailing slash
+        clean_logical_path = logical_path.rstrip('/')
+
     # get all schema locations attached to this collection
     schemas = []
     for schema, thetype in Query(callback,
                         "META_COLL_ATTR_VALUE, META_COLL_ATTR_UNITS",
-                        "COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}'".format(logical_path, MT_NAMESPACE)):
+                        "COLL_NAME = '{}' and META_COLL_ATTR_NAME = '{}'".format(clean_logical_path, MT_NAMESPACE)):
 #        callback.writeLine('serverLog','{} {}'.format(thetype, schema))
         if thetype == 'url':
             try:
@@ -157,14 +165,13 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
 #    callback.writeLine('serverLog', 'metadata_templates_collection_gather: before recursive flag')
 #    callback.writeLine('serverLog', 'length of schemas [{0}]'.format(len(schemas)))
     if int(recursive):
-        callback.writeLine('serverLog', 'metadata_templates_collection_gather: inside recursive flag [{0}]'.format(logical_path))
+        callback.writeLine('serverLog', 'metadata_templates_collection_gather: inside recursive flag [{0}]'.format(clean_logical_path))
 
-        clean_logical_path = logical_path.rstrip('/')
-        if logical_path.count('/') == 0:
+        if clean_logical_path.count('/') == 0:
             callback.writeLine('serverLog', 'metadata_templates_collection_gather: no forward slashes found, stopping')
-        elif logical_path[0] != '/':
+        elif clean_logical_path[0] != '/':
             callback.writeLine('serverLog', 'metadata_templates_collection_gather: not an absolute path, stopping')
-        elif logical_path  == '/':
+        elif clean_logical_path == '/':
             callback.writeLine('serverLog', 'metadata_templates_collection_gather: found /, complete')
         elif clean_logical_path.count('/') == 1:
             # found the top level zone, call gather on root (/)
