@@ -15,7 +15,7 @@ import irods_types
 
 MT_NAMESPACE = 'irods::metadata_templates'
 
-def mt_build_json_input(entity_name, entity_type, operation, value, units):
+def _mt_build_json_input(entity_name, entity_type, operation, value, units):
     json_input = {
         "entity_name": entity_name,
         "entity_type": entity_type,
@@ -31,16 +31,16 @@ def mt_build_json_input(entity_name, entity_type, operation, value, units):
     return json_input
 
 
-def mt_attach(callback, entity_name, entity_type, value, units):
+def _mt_attach(callback, entity_name, entity_type, value, units):
     # build JSON input for atomic payload
-    json_input = mt_build_json_input(entity_name, entity_type, 'add', value, units)
+    json_input = _mt_build_json_input(entity_name, entity_type, 'add', value, units)
     # call atomic, assume any errors will show up in the serverLog
     callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), '')
 
 
-def mt_detach(callback, entity_name, entity_type, value, units):
+def _mt_detach(callback, entity_name, entity_type, value, units):
     # build JSON input for atomic payload
-    json_input = mt_build_json_input(entity_name, entity_type, 'remove', value, units)
+    json_input = _mt_build_json_input(entity_name, entity_type, 'remove', value, units)
     # call atomic, assume any errors will show up in the serverLog
     callback.msi_atomic_apply_metadata_operations(json.dumps(json_input), '')
 
@@ -50,7 +50,7 @@ def metadata_templates_data_object_attach(rule_args, callback, rei):
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
-    result = mt_attach(callback, logical_path, 'data_object', schema, type)
+    result = _mt_attach(callback, logical_path, 'data_object', schema, type)
 
 
 def metadata_templates_collection_attach(rule_args, callback, rei):
@@ -58,7 +58,7 @@ def metadata_templates_collection_attach(rule_args, callback, rei):
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
-    result = mt_attach(callback, logical_path, 'collection', schema, type)
+    result = _mt_attach(callback, logical_path, 'collection', schema, type)
 
 
 def metadata_templates_data_object_detach(rule_args, callback, rei):
@@ -66,7 +66,7 @@ def metadata_templates_data_object_detach(rule_args, callback, rei):
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
-    result = mt_detach(callback, logical_path, 'data_object', schema, type)
+    result = _mt_detach(callback, logical_path, 'data_object', schema, type)
 
 
 def metadata_templates_collection_detach(rule_args, callback, rei):
@@ -74,7 +74,7 @@ def metadata_templates_collection_detach(rule_args, callback, rei):
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
-    result = mt_detach(callback, logical_path, 'collection', schema, type)
+    result = _mt_detach(callback, logical_path, 'collection', schema, type)
 
 
 def metadata_templates_data_object_gather(rule_args, callback, rei):
@@ -240,7 +240,7 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
     rule_args[2] = json.dumps(schemas)
 
 
-def mt_validate(callback, json_to_validate, schemas_string):
+def _mt_validate(callback, json_to_validate, schemas_string):
     # run json_to_validate through each schema, collecting any errors
     errors = []
 #    callback.writeLine('serverLog', 'TYPE: ::{}:: SCHEMAS: ::{}::'.format(type(schemas_string), schemas_string))
@@ -260,14 +260,14 @@ def mt_validate(callback, json_to_validate, schemas_string):
     return []
 
 
-def mt_get_avus(logical_path, callback):
+def _mt_get_avus(logical_path, callback):
     # Naive implementation to get AVUs for a logical path
     # - Will stomp on identical attributes with multiple values
     # - Will stomp on identical a/v combinations with different units
 
     # get AVUs
     collection_name, data_name = logical_path.rsplit("/", 1)
-#    callback.writeLine('serverLog', 'mt_get_avus - collection_name [{0}] data_name [{1}]'.format(collection_name, data_name))
+#    callback.writeLine('serverLog', '_mt_get_avus - collection_name [{0}] data_name [{1}]'.format(collection_name, data_name))
     the_metadata = {}
     for a, v in Query(callback,
                         "META_DATA_ATTR_NAME, META_DATA_ATTR_VALUE",
@@ -276,7 +276,7 @@ def mt_get_avus(logical_path, callback):
 #        callback.writeLine('serverLog', 'in avu loop... the_metadata [{0}]'.format(the_metadata))
 
     # return dict
-#    callback.writeLine('serverLog', 'mt_get_avus - the_metadata [{0}]'.format(the_metadata))
+#    callback.writeLine('serverLog', '_mt_get_avus - the_metadata [{0}]'.format(the_metadata))
     return the_metadata
 
 def metadata_templates_data_object_validate(rule_args, callback, rei):
@@ -305,15 +305,15 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
             errors = ['function [{0}] not found'.format(avu_builder_function)]
     else:
         # no function defined, call naive implementation
-#        callback.writeLine('serverLog', 'function name empty, executing mt_get_avus [{0}]'.format(logical_path))
-        the_metadata = mt_get_avus(logical_path, callback)
-#        callback.writeLine('serverLog', 'just after mt_get_avus - the_metadata [{0}]'.format(the_metadata))
+#        callback.writeLine('serverLog', 'function name empty, executing _mt_get_avus [{0}]'.format(logical_path))
+        the_metadata = _mt_get_avus(logical_path, callback)
+#        callback.writeLine('serverLog', 'just after _mt_get_avus - the_metadata [{0}]'.format(the_metadata))
 
 #    callback.writeLine('serverLog', 'the_metadata [{0}]'.format(the_metadata))
     if not errors:
         # no exception occurred
         # validate, catch validation errors
-        errors = mt_validate(callback, the_metadata, schemas_string)
+        errors = _mt_validate(callback, the_metadata, schemas_string)
 
 #    callback.writeLine('serverLog', 'AFTER_VALIDATION_ERRORS: [{}]'.format(errors))
     if errors:
