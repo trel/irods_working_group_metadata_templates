@@ -6,6 +6,30 @@
 #
 #################################
 
+"""iRODS Metadata Templates
+
+This module assumes a metadata template is a valid JSON-Schema document.
+
+This module provides standardized metadata template functionality for an iRODS Server:
+- attach
+- detach
+- gather
+- validate
+
+This module does not provide functionality to manage JSON-Schema documents themselves.
+
+Metadata templates can be located at:
+- an iRODS logical path
+- a local filesystem
+- a public URL
+
+Metadata templates can be attached, or associated, with iRODS Data Objects and Collections via AVUs.
+
+A Data Object and Collections of Data Objects can be validated against any associated templates.
+
+A request for validation will return any validation errors found by the JSON-Schema validator.
+"""
+
 import json
 import jsonschema
 import requests
