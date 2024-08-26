@@ -16,6 +16,17 @@ import irods_types
 MT_NAMESPACE = 'irods::metadata_templates'
 
 def _mt_build_json_input(entity_name, entity_type, operation, value, units):
+    """Utility function to build a JSON input stanza for msi_atomic_apply_metadata_operations()
+
+    Inputs:
+    - entity_name - string of absolute path of data object or collection
+    - entity_type - string of 'data_object' or 'collection'
+    - operation - string of 'add' or 'remove'
+    - value - string of AVU value
+    - units - string of AVU units
+    Returns:
+    - JSON-string - ready for use by msi_atomic_apply_metadata_operations()
+    """
     json_input = {
         "entity_name": entity_name,
         "entity_type": entity_type,
@@ -32,6 +43,17 @@ def _mt_build_json_input(entity_name, entity_type, operation, value, units):
 
 
 def _mt_attach(callback, entity_name, entity_type, value, units):
+    """Utility function to attach a metadata template to a data object or collection
+
+    Inputs:
+    - callback - callback handle to iRODS Rule Engine Framework
+    - entity_name - string of absolute path of data object or collection
+    - entity_type - string of 'data_object' or 'collection'
+    - value - string of AVU value
+    - units - string of AVU units
+    Returns:
+    - nothing
+    """
     # build JSON input for atomic payload
     json_input = _mt_build_json_input(entity_name, entity_type, 'add', value, units)
     # call atomic, assume any errors will show up in the serverLog
@@ -39,6 +61,17 @@ def _mt_attach(callback, entity_name, entity_type, value, units):
 
 
 def _mt_detach(callback, entity_name, entity_type, value, units):
+    """Utility function to detach a metadata template from a data object or collection
+
+    Inputs:
+    - callback - callback handle to iRODS Rule Engine Framework
+    - entity_name - string of absolute path of data object or collection
+    - entity_type - string of 'data_object' or 'collection'
+    - value - string of AVU value
+    - units - string of AVU units
+    Returns:
+    - nothing
+    """
     # build JSON input for atomic payload
     json_input = _mt_build_json_input(entity_name, entity_type, 'remove', value, units)
     # call atomic, assume any errors will show up in the serverLog
@@ -46,7 +79,15 @@ def _mt_detach(callback, entity_name, entity_type, value, units):
 
 
 def metadata_templates_data_object_attach(rule_args, callback, rei):
-    # Attach (logical_path, schema, type)
+    """Attaches a metadata template to a data object
+
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schema - location of schema
+    - type - type of schema location ['irods', 'local', 'url']
+    Output:
+    - None
+    """
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
@@ -54,7 +95,15 @@ def metadata_templates_data_object_attach(rule_args, callback, rei):
 
 
 def metadata_templates_collection_attach(rule_args, callback, rei):
-    # Attach (logical_path, schema, type)
+    """Attaches a metadata template to a collection
+
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schema - location of schema
+    - type - type of schema location ['irods', 'local', 'url']
+    Output:
+    - None
+    """
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
@@ -62,7 +111,15 @@ def metadata_templates_collection_attach(rule_args, callback, rei):
 
 
 def metadata_templates_data_object_detach(rule_args, callback, rei):
-    # Detach (logical_path, schema, type)
+    """Detaches a metadata template from a data object
+
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schema - location of schema
+    - type - type of schema location ['irods', 'local', 'url']
+    Output:
+    - None
+    """
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
@@ -70,7 +127,15 @@ def metadata_templates_data_object_detach(rule_args, callback, rei):
 
 
 def metadata_templates_collection_detach(rule_args, callback, rei):
-    # Detach (logical_path, schema, type)
+    """Detaches a metadata template from a collection
+
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schema - location of schema
+    - type - type of schema location ['irods', 'local', 'url']
+    Output:
+    - None
+    """
     logical_path = rule_args[0]
     schema = rule_args[1]
     type = rule_args[2]
@@ -78,10 +143,14 @@ def metadata_templates_collection_detach(rule_args, callback, rei):
 
 
 def metadata_templates_data_object_gather(rule_args, callback, rei):
-    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas_string)
-    # - Find all associated schemas
-    # - Recursive gathers schemas on all parents up to root
+    """Gathers all schemas associated with a data object
 
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - recursive - whether to gather schemas on all parents up to root [0=no, 1=yes]
+    Output:
+    - schemas_string - JSON-string of array containing all collected schemas
+    """
     logical_path = rule_args[0]
     recursive = rule_args[1]
 
@@ -148,10 +217,14 @@ def metadata_templates_data_object_gather(rule_args, callback, rei):
 
 
 def metadata_templates_collection_gather(rule_args, callback, rei):
-    # Export/Collapse/Rasterize/Gather/Dump (logical_path, recursive, schemas_string)
-    # - Find all associated schemas
-    # - Recursive gathers schemas on all parents up to root
+    """Gathers all schemas associated with a collection
 
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - recursive - whether to gather schemas on all parents up to root [0=no, 1=yes]
+    Output:
+    - schemas_string - JSON-string of array containing all collected schemas
+    """
     logical_path = rule_args[0]
     recursive = rule_args[1]
 
@@ -241,7 +314,14 @@ def metadata_templates_collection_gather(rule_args, callback, rei):
 
 
 def _mt_validate(callback, json_to_validate, schemas_string):
-    # run json_to_validate through each schema, collecting any errors
+    """Utility function to validate the passed JSON through each passed schema
+
+    Inputs:
+    - json_to_validate - JSON-string representing AVUs to be validated
+    - schemas_string - JSON-string of array of schemas to be used for validation
+    Returns:
+    - errors - list of accumulated schema validation errors
+    """
     errors = []
 #    callback.writeLine('serverLog', 'TYPE: ::{}:: SCHEMAS: ::{}::'.format(type(schemas_string), schemas_string))
     schemas = json.loads(schemas_string)
@@ -261,10 +341,16 @@ def _mt_validate(callback, json_to_validate, schemas_string):
 
 
 def _mt_get_avus(callback, logical_path):
-    # Naive implementation to get AVUs for a logical path
-    # - Will stomp on identical attributes with multiple values
-    # - Will stomp on identical a/v combinations with different units
+    """Utility function to naively get AVUs for a logical path
 
+    Inputs:
+    - callback - callback handle to iRODS Rule Engine Framework
+    - logical_path - absolute iRODS logical path
+    Returns:
+    - the_metadata - python dict containing the naive AVU-to-JSON conversion
+    Side Effects:
+    - This function will stomp AVUs with identical attributes and multiple values
+    """
     # get AVUs
     collection_name, data_name = logical_path.rsplit("/", 1)
 #    callback.writeLine('serverLog', '_mt_get_avus - collection_name [{0}] data_name [{1}]'.format(collection_name, data_name))
@@ -280,11 +366,15 @@ def _mt_get_avus(callback, logical_path):
     return the_metadata
 
 def metadata_templates_data_object_validate(rule_args, callback, rei):
-    # Validate data object (logical_path, schemas_string, avu_builder_function, errors)
-    # - Get and build json payload with all current AVUs
-    # - Run payload and schemas through validator
-    # - Return result (OK or failure/explanation)
+    """Validates a data object's metadata against a set of schemas
 
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schemas_string - JSON-string of array of schemas
+    - avu_builder_function - dotted name of custom module.function for AVU-to-JSON conversion
+    Output:
+    - errors - string of list of any accumulated validation errors
+    """
     logical_path = rule_args[0]
     schemas_string = rule_args[1]
     avu_builder_function = rule_args[2]
@@ -321,16 +411,20 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
 
 
 def metadata_templates_collection_validate(rule_args, callback, rei):
-    # Validate collection (logical_path, schemas_string, avu_builder_function, errors)
-    # - Loop through data objects, validate each
-    # - Return result (OK or failure/explanation)
+    """Validates the metadata of a collection's data objects against a set of schemas
 
+    Inputs:
+    - logical_path - absolute iRODS logical path
+    - schemas_string - JSON-string of array of schemas
+    - avu_builder_function - dotted name of custom module.function for AVU-to-JSON conversion
+    Output:
+    - errors - string of list of any accumulated validation errors
+    """
     logical_path = rule_args[0]
     schemas_string = rule_args[1]
     avu_builder_function = rule_args[2]
 
     # find all data objects in this collection
-    # TODO: or gather all at once, then validate each object individually (in parallel?)
     data_objects = []
     for coll_name, data_name in Query(callback,
                                 "COLL_NAME, DATA_NAME",
