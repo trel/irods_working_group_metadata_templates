@@ -1,4 +1,4 @@
-def build_fancy_dict(logical_path, callback):
+def build_fancy_dict(callback, logical_path):
 
     the_metadata = {'leuven': 'fancy'}
 

@@ -260,7 +260,7 @@ def _mt_validate(callback, json_to_validate, schemas_string):
     return []
 
 
-def _mt_get_avus(logical_path, callback):
+def _mt_get_avus(callback, logical_path):
     # Naive implementation to get AVUs for a logical path
     # - Will stomp on identical attributes with multiple values
     # - Will stomp on identical a/v combinations with different units
@@ -299,14 +299,14 @@ def metadata_templates_data_object_validate(rule_args, callback, rei):
             modulename, funcname = avu_builder_function.split('.', 1)
             module = __import__(modulename)
             func = getattr(module, funcname)
-            the_metadata = func(logical_path, callback)
+            the_metadata = func(callback, logical_path)
         except (ModuleNotFoundError, AttributeError, ValueError):
 #            callback.writeLine('serverLog', 'except triggered, function [{0}] not found'.format(avu_builder_function))
             errors = ['function [{0}] not found'.format(avu_builder_function)]
     else:
         # no function defined, call naive implementation
 #        callback.writeLine('serverLog', 'function name empty, executing _mt_get_avus [{0}]'.format(logical_path))
-        the_metadata = _mt_get_avus(logical_path, callback)
+        the_metadata = _mt_get_avus(callback, logical_path)
 #        callback.writeLine('serverLog', 'just after _mt_get_avus - the_metadata [{0}]'.format(the_metadata))
 
 #    callback.writeLine('serverLog', 'the_metadata [{0}]'.format(the_metadata))
