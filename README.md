@@ -1,7 +1,10 @@
 # iRODS Metadata Templates Working Group
 
+This working group has been dissolved.
+
 ## Minutes
 
+ - [20250218](20250218-minutes.md)
  - [20250121](20250121-minutes.md)
  - [20241015](20241015-minutes.md)
  - [20240917](20240917-minutes.md)
